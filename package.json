@@ -7,12 +7,18 @@
     "build": "next build",
     "biome-write": "npx @biomejs/biome format --write .",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "halo:test": "node scripts/test-halo-connection.js",
+    "halo:health": "curl -s $HALO_API_BASE_URL/actuator/health",
+    "dev:halo": "HALO_ENABLE_FALLBACK=false npm run dev",
+    "dev:local": "HALO_ENABLE_FALLBACK=true npm run dev"
   },
   "dependencies": {
+    "@halo-dev/api-client": "^2.21.1",
     "@mdx-js/loader": "^3.1.0",
     "@next/mdx": "^15.3.1",
     "@once-ui-system/core": "^1.4.27",
+    "axios": "^1.12.2",
     "classnames": "^2.5.1",
     "cookie": "^1.0.2",
     "gray-matter": "^4.0.3",

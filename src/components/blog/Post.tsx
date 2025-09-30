@@ -3,9 +3,10 @@
 import { Card, Column, Media, Row, Avatar, Text } from "@once-ui-system/core";
 import { formatDate } from "@/utils/formatDate";
 import { person } from "@/resources";
+import type { LocalPost } from "@/lib/adapters/post-adapter";
 
 interface PostProps {
-  post: any;
+  post: LocalPost;
   thumbnail: boolean;
   direction?: "row" | "column";
 }

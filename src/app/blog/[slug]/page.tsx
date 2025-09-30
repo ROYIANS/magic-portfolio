@@ -16,17 +16,23 @@ import {
 } from "@once-ui-system/core";
 import { baseURL, about, blog, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
-import { getPosts } from "@/utils/utils";
+import { getCachedPost, getCachedPosts } from "@/lib/cache";
 import { Metadata } from "next";
 import React from "react";
 import { Posts } from "@/components/blog/Posts";
 import { ShareSection } from "@/components/blog/ShareSection";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const posts = getPosts(["src", "app", "blog", "posts"]);
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  try {
+    // 使用缓存获取文章列表
+    const posts = await getCachedPosts();
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    console.error("Failed to generate static params:", error);
+    return [];
+  }
 }
 
 export async function generateMetadata({
@@ -39,18 +45,22 @@ export async function generateMetadata({
     ? routeParams.slug.join("/")
     : routeParams.slug || "";
 
-  const posts = getPosts(["src", "app", "blog", "posts"]);
-  let post = posts.find((post) => post.slug === slugPath);
+  try {
+    const post = await getCachedPost(slugPath);
 
-  if (!post) return {};
+    if (!post) return {};
 
-  return Meta.generate({
-    title: post.metadata.title,
-    description: post.metadata.summary,
-    baseURL: baseURL,
-    image: post.metadata.image || `/api/og/generate?title=${post.metadata.title}`,
-    path: `${blog.path}/${post.slug}`,
-  });
+    return Meta.generate({
+      title: post.metadata.title,
+      description: post.metadata.summary,
+      baseURL: baseURL,
+      image: post.metadata.image || `/api/og/generate?title=${encodeURIComponent(post.metadata.title)}`,
+      path: `${blog.path}/${post.slug}`,
+    });
+  } catch (error) {
+    console.error("Failed to generate metadata:", error);
+    return {};
+  }
 }
 
 export default async function Blog({ params }: { params: Promise<{ slug: string | string[] }> }) {
@@ -59,7 +69,13 @@ export default async function Blog({ params }: { params: Promise<{ slug: string 
     ? routeParams.slug.join("/")
     : routeParams.slug || "";
 
-  let post = getPosts(["src", "app", "blog", "posts"]).find((post) => post.slug === slugPath);
+  let post;
+  try {
+    post = await getCachedPost(slugPath);
+  } catch (error) {
+    console.error("Failed to fetch post:", error);
+    notFound();
+  }
 
   if (!post) {
     notFound();
